@@ -45,9 +45,12 @@ systems daily; none of the code is copied from any employer's systems.
 
 ## Roadmap
 
+- [ ] PostgreSQL + async SQLAlchemy (pooling safe for Vercel serverless cold starts)
+- [ ] Idempotent webhook handlers backed by an `event_logs` table
+- [ ] `X-Sync-Source: FOBA-Engine` header — ignore circular webhook updates
+- [ ] BOM engine: finished SKUs → raw components; atomic `SELECT FOR UPDATE`
+      deductions so a sale decrements ingredients without race conditions
 - [ ] Webhook signature verification (Square + Shopify)
-- [ ] Canonical inventory store (SQLite to start, Postgres later)
-- [ ] Reconciliation rules (which channel wins conflicts)
 - [ ] Sheets audit log writer
 - [ ] Zebra label print trigger on receiving
 - [ ] Multi-tenant: one deploy, many shops
