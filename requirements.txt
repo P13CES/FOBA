@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+squareup
+ShopifyAPI
+gspread
+google-auth
+python-dotenv
