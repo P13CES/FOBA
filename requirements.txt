@@ -5,3 +5,7 @@ ShopifyAPI
 gspread
 google-auth
 python-dotenv
+sqlalchemy[asyncio]
+asyncpg
+aiosqlite  # local dev / tests only; production uses asyncpg + PostgreSQL
+alembic

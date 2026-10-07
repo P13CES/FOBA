@@ -24,6 +24,9 @@ Shopify webhooks ─┘         │
 
 - `app/main.py` — FastAPI app: health check, webhook receivers, manual sync trigger
 - `app/config.py` — environment-based settings, no secrets in code
+- `app/models.py` — SQLAlchemy models: `event_logs`, `skus`, `inventory_levels`, `bom_components`
+- `app/db.py` — async engine, session factory, `get_db` dependency, startup table init
+- `app/events.py` — idempotent webhook ingestion keyed on `(source, event_id)`
 - `app/square_client.py` — Square inventory reads/writes
 - `app/shopify_client.py` — Shopify inventory reads/writes
 - `app/sheets_client.py` — Sheets audit log + purchasing view
@@ -45,8 +48,9 @@ systems daily; none of the code is copied from any employer's systems.
 
 ## Roadmap
 
-- [ ] PostgreSQL + async SQLAlchemy (pooling safe for Vercel serverless cold starts)
-- [ ] Idempotent webhook handlers backed by an `event_logs` table
+- [x] PostgreSQL + async SQLAlchemy (pooling safe for Vercel serverless cold starts)
+- [x] Idempotent webhook handlers backed by an `event_logs` table
+- [x] `bom_components` table laid for the BOM engine
 - [ ] `X-Sync-Source: FOBA-Engine` header — ignore circular webhook updates
 - [ ] BOM engine: finished SKUs → raw components; atomic `SELECT FOR UPDATE`
       deductions so a sale decrements ingredients without race conditions
@@ -54,3 +58,4 @@ systems daily; none of the code is copied from any employer's systems.
 - [ ] Sheets audit log writer
 - [ ] Zebra label print trigger on receiving
 - [ ] Multi-tenant: one deploy, many shops
+- [ ] Alembic migrations (currently `create_all` on startup; migrate before prod data)
