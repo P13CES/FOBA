@@ -2,6 +2,9 @@ import os
 
 
 class Settings:
+    database_url: str = os.environ.get(
+        "DATABASE_URL", "sqlite+aiosqlite:///./foba.db"
+    )
     square_access_token: str = os.environ.get("SQUARE_ACCESS_TOKEN", "")
     square_location_id: str = os.environ.get("SQUARE_LOCATION_ID", "")
     shopify_shop: str = os.environ.get("SHOPIFY_SHOP", "")

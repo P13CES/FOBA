@@ -1,8 +1,15 @@
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
+from app import events
+from app.config import settings  # noqa: F401  (kept for env validation on import)
+from app.db import get_db, lifespan
 
-app = FastAPI(title="FOBA", description="Multi-channel inventory middleware")
+app = FastAPI(
+    title="FOBA",
+    description="Multi-channel inventory middleware",
+    lifespan=lifespan,
+)
 
 
 @app.get("/health")
@@ -11,17 +18,39 @@ def health():
 
 
 @app.post("/webhooks/square")
-async def square_webhook(request: Request):
-    # TODO: verify Square webhook signature, then enqueue the inventory event
+async def square_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    # TODO: verify Square webhook signature before ingesting
     payload = await request.json()
-    return {"received": True, "event": payload.get("type")}
+    log, duplicate = await events.ingest_event(
+        db,
+        source="square",
+        event_id=str(payload.get("event_id", "unknown")),
+        event_type=str(payload.get("type", "unknown")),
+        payload=payload,
+    )
+    if duplicate:
+        return {"received": True, "duplicate": True, "event_log_id": log.id}
+    # TODO: enqueue inventory reconciliation for this event
+    await events.mark_processed(db, log)
+    return {"received": True, "event_log_id": log.id}
 
 
 @app.post("/webhooks/shopify")
-async def shopify_webhook(request: Request):
-    # TODO: verify Shopify HMAC, then enqueue the inventory event
+async def shopify_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    # TODO: verify Shopify HMAC before ingesting
     payload = await request.json()
-    return {"received": True}
+    log, duplicate = await events.ingest_event(
+        db,
+        source="shopify",
+        event_id=request.headers.get("x-shopify-webhook-id", "unknown"),
+        event_type=request.headers.get("x-shopify-topic", "unknown"),
+        payload=payload,
+    )
+    if duplicate:
+        return {"received": True, "duplicate": True, "event_log_id": log.id}
+    # TODO: enqueue inventory reconciliation for this event
+    await events.mark_processed(db, log)
+    return {"received": True, "event_log_id": log.id}
 
 
 @app.post("/sync/run")
